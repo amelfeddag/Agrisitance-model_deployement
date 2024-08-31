@@ -7,7 +7,7 @@ from .optimization_algorithm.genetic_algorithm import run_genetic_algorithm
 
 # Genetic Algorithm parameters(do not modify)
 population_size = 200
-num_generations = 800
+num_generations = 400
 mutation_rate = 0.2
 crossover_rate = 0.8
 
