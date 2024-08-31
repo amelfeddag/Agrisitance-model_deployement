@@ -1,22 +1,22 @@
 from flask import Flask, jsonify, request, make_response
-from asgiref.wsgi import WsgiToAsgi
-import time
-import json
+import traceback
+import logging
 
 from src.predictOptimizeCrops.main import predict_optimize_crops_main
 
 app = Flask(__name__)
+logging.basicConfig(level=logging.DEBUG)
 
 @app.route('/')
-async def root():
+def root():
     return jsonify({"message": "Welcome to Agrissistance Crop Prediction and Optimization API"})
 
 @app.route('/predict-optimize-crops', methods=['POST'])
-async def predict_optimize_crops():
-    start_time = time.time()
-
+def predict_optimize_crops():
     try:
         data = request.get_json()
+        app.logger.info(f"Received data: {data}")
+        
         input_data = (
             data.get('ph'), data.get('temperature'), data.get('rainfall'),
             data.get('humidity'), data.get('nitrogen'), data.get('phosphorus'),
@@ -24,22 +24,15 @@ async def predict_optimize_crops():
             data.get('total_area')
         )
 
-        print('Predicting and optimizing crops...')
+        app.logger.info('Predicting and optimizing crops...')
         crop_data = predict_optimize_crops_main(input_data)
-        if isinstance(crop_data, str):
-            crop_data = json.loads(crop_data)
-
+        
         return jsonify(crop_data)
 
     except Exception as e:
-        print(e)
-        return make_response(jsonify({"detail": str(e)}), 500)
-
-    finally:
-        execution_time = time.time() - start_time  
-        print(f"Execution time: {execution_time:.2f} seconds")
-
-asgi_app = WsgiToAsgi(app)
+        app.logger.error(f"An error occurred: {str(e)}")
+        app.logger.error(traceback.format_exc())
+        return make_response(jsonify({"error": str(e)}), 500)
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(debug=True)
