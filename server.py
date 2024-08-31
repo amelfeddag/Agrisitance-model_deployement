@@ -2,17 +2,17 @@ from flask import Flask, jsonify, request, make_response
 import traceback
 import logging
 
-from src.predictOptimizeCrops.main import predict_optimize_crops_main
+from src.predictOptimizeCrops.main import predict_crops_main
 
 app = Flask(__name__)
 logging.basicConfig(level=logging.DEBUG)
 
 @app.route('/')
 def root():
-    return jsonify({"message": "Welcome to Agrissistance Crop Prediction and Optimization API"})
+    return jsonify({"message": "Welcome to Agrissistance Crop Prediction API"})
 
-@app.route('/predict-optimize-crops', methods=['POST'])
-def predict_optimize_crops():
+@app.route('/predict-crops', methods=['POST'])
+def predict_crops():
     try:
         data = request.get_json()
         app.logger.info(f"Received data: {data}")
@@ -20,12 +20,11 @@ def predict_optimize_crops():
         input_data = (
             data.get('ph'), data.get('temperature'), data.get('rainfall'),
             data.get('humidity'), data.get('nitrogen'), data.get('phosphorus'),
-            data.get('potassium'), data.get('o2'), data.get('total_budget'),
-            data.get('total_area')
+            data.get('potassium'), data.get('o2')
         )
 
-        app.logger.info('Predicting and optimizing crops...')
-        crop_data = predict_optimize_crops_main(input_data)
+        app.logger.info('Predicting crops...')
+        crop_data = predict_crops_main(input_data)
         
         return jsonify(crop_data)
 
