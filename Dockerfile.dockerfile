@@ -9,4 +9,4 @@ COPY . .
 
 ENV PORT=10000
 
-CMD gunicorn --bind 0.0.0.0:$PORT --log-level debug server:app
+CMD gunicorn --bind 0.0.0.0:$PORT --log-level debug --timeout 400 server:app
