@@ -49,30 +49,37 @@ async def generate_business_plan():
 
         # Call the crop prediction function with the correct inputs
         cropData = predict_optimize_crops_main(model_inputs)
+        logger.info(f"Crop data returned: {cropData}")
+
         if isinstance(cropData, str):
+            logger.info("Converting cropData from string to JSON")
             cropData = json.loads(cropData)
 
+        # Call the business plan generation function
         businessPlan = generate_business_plan_main(model_inputs, cropData)
+        logger.info(f"Business plan returned: {businessPlan}")
+
         if isinstance(businessPlan, str):
+            logger.info("Converting businessPlan from string to JSON")
             businessPlan = json.loads(businessPlan)
 
-        logger.info(f"Generated business plan: {businessPlan}")
-        logger.info(f"Generated crop data: {cropData}")
+        logger.info(f"Final business plan: {businessPlan}")
+        logger.info(f"Final crop data: {cropData}")
 
         return jsonify({
             "cropData": cropData,
             "businessPlan": businessPlan
         })
 
+    except json.JSONDecodeError as json_err:
+        logger.error(f"JSON decoding error: {json_err}", exc_info=True)
+        return make_response(jsonify({"detail": "Invalid JSON format returned"}), 500)
     except Exception as e:
         logger.error(f"Error generating business plan: {e}", exc_info=True)
         return make_response(jsonify({"detail": str(e)}), 500)
-
     finally:
-        execution_time = time.time() - start_time  
+        execution_time = time.time() - start_time
         logger.info(f"Execution time: {execution_time:.2f} seconds")
-
-
 
 @app.route("/chat", methods=['POST'])
 async def chat():
@@ -95,7 +102,6 @@ async def chat():
     except Exception as e:
         logger.error(f"Error during chat processing: {e}", exc_info=True)
         return make_response(jsonify({"detail": str(e)}), 500)
-    
 
 asgi_app = WsgiToAsgi(app)
 
