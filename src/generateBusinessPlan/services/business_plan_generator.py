@@ -58,9 +58,14 @@ Please ensure all output is in valid JSON format."""
     if response.status_code == 200:
         try:
             content = response.json()['response']['messages'][0]['content']
+            # Log the raw content for debugging
+            print(f"Raw API response content: {content}")
             return json.loads(content)
-        except json.JSONDecodeError:
+        except json.JSONDecodeError as e:
+            # Log the error with raw content
+            print(f"JSON decode error: {e}, Raw content: {content}")
             return {"error": f"Unable to parse JSON response. Raw content: {content}"}
     else:
-        # return {"error": f"{response.status_code} - {response.text}"}
-        return response.text
+        # Log the non-200 response
+        print(f"API returned non-200 status: {response.status_code}, Response: {response.text}")
+        return {"error": f"{response.status_code} - {response.text}"}
