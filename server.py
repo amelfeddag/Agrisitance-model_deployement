@@ -41,9 +41,9 @@ async def generate_business_plan():
         print("Crop Data: ", cropData)
               
         # Save the business plan and crop data to the database
-        print("Saving to database...")
-        await process_business_plan_and_save(businessPlan, cropData, land_id)
-        await process_crops_and_save(cropData, land_id)
+      #  print("Saving to database...")
+      #  await process_business_plan_and_save(businessPlan, cropData, land_id)
+      #  await process_crops_and_save(cropData, land_id)
 
         return jsonify({
             "cropData": cropData,
