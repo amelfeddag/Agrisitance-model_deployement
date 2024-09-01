@@ -1,26 +1,8 @@
-import logging
-from flask import Flask, jsonify, request, make_response
-from asgiref.wsgi import WsgiToAsgi
-import requests
-import time
 import json
-import os
-
-from src.predictOptimizeCrops.main import predict_optimize_crops_main
-from src.generateBusinessPlan.main import generate_business_plan_main
-from src.chatBot.chat_service import ChatRequest
-
-# Set up logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
+import logging
+from flask import Flask, request, jsonify
 
 app = Flask(__name__)
-
-@app.route('/')
-async def root():
-    logger.info("Root endpoint called")
-    return jsonify({"message": "Welcome to Agrissistance Models API"})
-
 
 def parse_api_response(response):
     """
@@ -53,91 +35,39 @@ def parse_api_response(response):
         logging.error(f"Error parsing API response: {e}")
         raise e
 
-
 @app.route('/generate-business-plan', methods=['POST'])
-async def generate_business_plan():
-    start_time = time.time()
-    logger.info("Generate Business Plan endpoint called")
-
+def generate_business_plan():
     try:
-        data = request.get_json()
-        logger.info(f"Received data: {data}")
+        # Get the raw response from the API or request body
+        raw_response = request.get_json()
 
-        # Map the incoming data to the expected order of inputs
-        model_inputs = (
-            data.get('ph'),
-            data.get('temperature'),
-            data.get('rainfall'),
-            data.get('humidity'),
-            data.get('nitrogen'),
-            data.get('phosphorus'),
-            data.get('potassium'),
-            data.get('o2'),
-            data.get('total_budget'),
-            data.get('total_area')
-        )
+        # Parse the raw response
+        parsed_response = parse_api_response(raw_response)
 
-        # Log model inputs to ensure they are correct
-        logger.info(f"Model inputs: {model_inputs}")
+        # Check if 'messages' key exists and parse the content
+        if 'response' in parsed_response and 'messages' in parsed_response['response']:
+            content = parsed_response['response']['messages'][0]['content']
+            
+            # Handle the case where content is a JSON string
+            try:
+                content_dict = json.loads(content)
+            except json.JSONDecodeError as e:
+                logging.error(f"Failed to decode JSON from content: {e}")
+                return jsonify({"status": "error", "message": "Invalid JSON content in response"}), 500
 
-        # Call the crop prediction function with the correct inputs
-        cropData = predict_optimize_crops_main(model_inputs)
-        logger.info(f"Crop data returned: {cropData}")
+            return jsonify({"status": "success", "data": content_dict})
 
-        if isinstance(cropData, str):
-            logger.info("Converting cropData from string to JSON")
-            cropData = json.loads(cropData)
+        else:
+            logging.error("Expected keys 'response' or 'messages' not found in response")
+            return jsonify({"status": "error", "message": "Invalid response format"}), 500
 
-        # Call the business plan generation function
-        businessPlan = generate_business_plan_main(model_inputs, cropData)
-        logger.info(f"Business plan returned: {businessPlan}")
+    except (ValueError, TypeError, json.JSONDecodeError) as e:
+        logging.error(f"Error in response handling: {e}")
+        return jsonify({"status": "error", "message": str(e)}), 500
 
-        if isinstance(businessPlan, str):
-            logger.info("Converting businessPlan from string to JSON")
-            businessPlan = json.loads(businessPlan)
-
-        logger.info(f"Final business plan: {businessPlan}")
-        logger.info(f"Final crop data: {cropData}")
-
-        return jsonify({
-            "cropData": cropData,
-            "businessPlan": businessPlan
-        })
-
-    except json.JSONDecodeError as json_err:
-        logger.error(f"JSON decoding error: {json_err}", exc_info=True)
-        return make_response(jsonify({"detail": "Invalid JSON format returned"}), 500)
     except Exception as e:
-        logger.error(f"Error generating business plan: {e}", exc_info=True)
-        return make_response(jsonify({"detail": str(e)}), 500)
-    finally:
-        execution_time = time.time() - start_time
-        logger.info(f"Execution time: {execution_time:.2f} seconds")
-
-@app.route("/chat", methods=['POST'])
-async def chat():
-    logger.info("Chat endpoint called")
-    try:
-        headers = {
-            'Content-Type': 'application/json',
-            'api_token': os.getenv('API_TOKEN')
-        }
-        payload = request.get_json()
-        logger.info(f"Received chat request: {payload}")
-        response = requests.post(
-            os.getenv('API_URL'),
-            json=payload,
-            headers=headers
-        )
-        logger.info(f"Chat response: {response.json()}")
-        return jsonify(response.json())
-    
-    except Exception as e:
-        logger.error(f"Error during chat processing: {e}", exc_info=True)
-        return make_response(jsonify({"detail": str(e)}), 500)
-
-asgi_app = WsgiToAsgi(app)
+        logging.error(f"Unexpected error: {e}")
+        return jsonify({"status": "error", "message": "An unexpected error occurred"}), 500
 
 if __name__ == '__main__':
-    logger.info("Starting Flask application")
-    app.run()
+    app.run(debug=True)
