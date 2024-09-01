@@ -21,6 +21,39 @@ async def root():
     logger.info("Root endpoint called")
     return jsonify({"message": "Welcome to Agrissistance Models API"})
 
+
+def parse_api_response(response):
+    """
+    Parses the API response and returns it as a dictionary.
+
+    Parameters:
+    - response: The raw response from the API, which could be in various formats.
+
+    Returns:
+    - A dictionary containing the parsed response.
+    """
+    try:
+        if isinstance(response, str):
+            # Attempt to parse as JSON
+            try:
+                parsed_response = json.loads(response)
+            except json.JSONDecodeError as e:
+                logging.error(f"Failed to decode JSON from string: {e}")
+                raise ValueError("The API response is a string but not valid JSON.")
+        elif isinstance(response, dict):
+            # If it's already a dictionary, return as-is
+            parsed_response = response
+        else:
+            # Handle unexpected types
+            raise TypeError(f"Unexpected response type: {type(response)}")
+
+        return parsed_response
+
+    except Exception as e:
+        logging.error(f"Error parsing API response: {e}")
+        raise e
+
+
 @app.route('/generate-business-plan', methods=['POST'])
 async def generate_business_plan():
     start_time = time.time()
