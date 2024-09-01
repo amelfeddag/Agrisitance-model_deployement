@@ -1,8 +1,6 @@
-src/generateBusinessPlan
+/
 │
 ├── main.py
 ├── services/
 │   └── business_plan_generator.py
-├── util/
-│   └── parseBusinessPlan.py
 └──

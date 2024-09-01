@@ -1,12 +1,7 @@
-# util/parseBusinessPlan.py
-
 import json
 
 def parse_detailed_business_plan_response(response):
     try:
-        # Log the raw response
-        print(f"Raw response to parse: {response}")
-        
         # Parse the JSON content from the response
         business_plan_json = json.loads(response)
         content = json.loads(business_plan_json["response"]["messages"][0]["content"])
@@ -36,14 +31,14 @@ def parse_detailed_business_plan_response(response):
         return json.dumps(readable_plan_json, indent=2)
 
     except Exception as e:
-        print(f"Error parsing business plan: {e}")
         return f"Error parsing business plan: {e}"
+    
+
+
+
 
 def parse_business_plan_response(response):
     try:
-        # Log the raw response
-        print(f"Raw response to parse: {response}")
-        
         # Parse the JSON content from the response
         business_plan_json = json.loads(response)
         content = json.loads(business_plan_json["response"]["messages"][0]["content"])
@@ -64,5 +59,4 @@ def parse_business_plan_response(response):
         return readable_plan.strip()
 
     except Exception as e:
-        print(f"Error parsing business plan: {e}")
         return f"Error parsing business plan: {e}"
