@@ -25,13 +25,29 @@ async def root():
 async def generate_business_plan():
     start_time = time.time()
     logger.info("Generate Business Plan endpoint called")
-    
+
     try:
         data = request.get_json()
         logger.info(f"Received data: {data}")
-        model_inputs = data.get('model_inputs')
-        
-        # Pass the model inputs to the crop prediction function
+
+        # Map the incoming data to the expected order of inputs
+        model_inputs = (
+            data.get('ph'),
+            data.get('temperature'),
+            data.get('rainfall'),
+            data.get('humidity'),
+            data.get('nitrogen'),
+            data.get('phosphorus'),
+            data.get('potassium'),
+            data.get('o2'),
+            data.get('total_budget'),
+            data.get('total_area')
+        )
+
+        # Log model inputs to ensure they are correct
+        logger.info(f"Model inputs: {model_inputs}")
+
+        # Call the crop prediction function with the correct inputs
         cropData = predict_optimize_crops_main(model_inputs)
         if isinstance(cropData, str):
             cropData = json.loads(cropData)
@@ -47,14 +63,15 @@ async def generate_business_plan():
             "cropData": cropData,
             "businessPlan": businessPlan
         })
-    
+
     except Exception as e:
         logger.error(f"Error generating business plan: {e}", exc_info=True)
         return make_response(jsonify({"detail": str(e)}), 500)
-    
+
     finally:
         execution_time = time.time() - start_time  
         logger.info(f"Execution time: {execution_time:.2f} seconds")
+
 
 
 @app.route("/chat", methods=['POST'])
