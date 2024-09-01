@@ -9,8 +9,6 @@ from src.predictOptimizeCrops.main import predict_optimize_crops_main
 from src.generateBusinessPlan.main import generate_business_plan_main
 from src.chatBot.chat_service import ChatRequest
 
-from DB.DBqueries import get_model_inputs, process_business_plan_and_save, process_crops_and_save
-
 app = Flask(__name__)
 
 @app.route('/')
@@ -23,11 +21,8 @@ async def generate_business_plan():
     
     try:
         data = request.get_json()
-        land_id = data.get('land_id')
+        model_inputs = data.get('model_inputs')
         
-        # Fetch necessary data from the database using the land_id
-        model_inputs = await get_model_inputs(land_id)
-
         # Pass the model inputs to the crop prediction function
         cropData = predict_optimize_crops_main(model_inputs)
         if isinstance(cropData, str):
@@ -39,11 +34,6 @@ async def generate_business_plan():
 
         print("Business Plan: ", businessPlan)
         print("Crop Data: ", cropData)
-              
-        # Save the business plan and crop data to the database
-      #  print("Saving to database...")
-      #  await process_business_plan_and_save(businessPlan, cropData, land_id)
-      #  await process_crops_and_save(cropData, land_id)
 
         return jsonify({
             "cropData": cropData,
